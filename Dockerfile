@@ -1,16 +1,14 @@
-#build container
-FROM mcr.microsoft.com/dotnet/core/sdk:3.1.201-alpine as build
+FROM spittet/php-postgresql:latest
 
-WORKDIR /build
-COPY . .
-RUN dotnet run -p build/build.csproj
+RUN mkdir /laravel
+COPY . /laravel
+WORKDIR /laravel
+RUN service postgresql start
 
-#runtime container
-FROM mcr.microsoft.com/dotnet/core/aspnet:3.1.3-alpine
+RUN curl -sS https://getcomposer.org/installer | php
 
-COPY --from=build /build/publish /app
-WORKDIR /app
-
-EXPOSE 5000
-
-ENTRYPOINT ["dotnet", "Conduit.dll"]
+RUN mv composer.phar /usr/local/bin/composer
+EXPOSE 8000
+RUN chmod +x /usr/local/bin/composer
+RUN composer install
+CMD sh configuration.sh
